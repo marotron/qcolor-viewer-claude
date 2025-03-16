@@ -198,7 +198,7 @@ export class ColorEditor implements vscode.Disposable {
         // Generate hex string
         const hexString = `#${ColorParser.toHexString(color.r)}${ColorParser.toHexString(color.g)}${ColorParser.toHexString(color.b)}`;
         
-        // HTML for the webview
+        // HTML for the webview - with proper template literal escaping
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -693,4 +693,15 @@ export class ColorEditor implements vscode.Disposable {
         })();
     </script>
 </body>
-</html>
+</html>`;
+    }
+    
+    /**
+     * Clean up resources when the extension is deactivated
+     */
+    public dispose(): void {
+        if (this.panel) {
+            this.panel.dispose();
+        }
+    }
+}

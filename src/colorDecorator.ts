@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ColorParser, QColorMatch } from './colorParser';
+import { ColorParser, QColorMatch, QColor } from './colorParser';
 
 export class ColorDecorator implements vscode.Disposable {
     private decorationType: vscode.TextEditorDecorationType;
@@ -23,8 +23,6 @@ export class ColorDecorator implements vscode.Disposable {
         if (decorationType === 'gutter') {
             return vscode.window.createTextEditorDecorationType({
                 gutterIconSize: `${colorSampleSize}px`,
-                // Will be set dynamically for each decoration
-                gutterIconPath: undefined,
             });
         } else {
             return vscode.window.createTextEditorDecorationType({
@@ -88,7 +86,11 @@ export class ColorDecorator implements vscode.Disposable {
                 decorations.push({
                     range: match.range,
                     renderOptions: {
-                        gutterIconPath: uri
+                        // Using the after property instead of gutterIconPath for better compatibility
+                        after: {
+                            contentIconPath: uri,
+                            margin: '0 0 0 5px'
+                        }
                     }
                 });
             } else {
@@ -122,7 +124,7 @@ export class ColorDecorator implements vscode.Disposable {
     /**
      * Create an SVG for the color (used for gutter icons)
      */
-    private createColorSvg(color: { r: number, g: number, b: number, a: number }, size: number): string {
+    private createColorSvg(color: QColor, size: number): string {
         const cssColor = ColorParser.toCssColor(color);
         
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
@@ -141,7 +143,7 @@ export class ColorDecorator implements vscode.Disposable {
     /**
      * Get color match for a given position
      */
-    public getColorMatchAtPosition(document: vscode.TextDocument, position: vscode.Position): QColorMatch | undefined {
+    public getColorMatchAtPosition(_document: vscode.TextDocument, position: vscode.Position): QColorMatch | undefined {
         // Find the color match containing the position
         return this.colorMatches.find(match => match.range.contains(position));
     }

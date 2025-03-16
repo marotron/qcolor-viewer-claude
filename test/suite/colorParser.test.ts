@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { ColorParser, QColorFormat } from '../../colorParser';
+import { ColorParser, QColorFormat } from '../../src/colorParser';
 
 suite('ColorParser Test Suite', () => {
     test('Parse RGB QColor', () => {
