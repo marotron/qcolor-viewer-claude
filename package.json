@@ -1,11 +1,17 @@
 {
     "name": "qcolor-visualizer-editor",
-    "displayName": "QColor Visualizer & Editor",
+    "displayName": "`QColor` Visualizer & Editor",
+    "publisher": "marotron",
     "description": "Visualize and edit PyQt/PySide QColor objects in Python files",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "engines": {
-        "vscode": "^1.60.0"
+        "vscode": "^1.80.0"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/marotron/vsce-qcolor-preview.git"
+    },
+    "license": "MIT",
     "categories": [
         "Other",
         "Visualization"
@@ -60,16 +66,16 @@
     "devDependencies": {
         "@types/glob": "^7.1.4",
         "@types/mocha": "^9.0.0",
-        "@types/node": "14.x",
+        "@types/node": "^22.8.2",
         "@types/vscode": "^1.60.0",
         "@typescript-eslint/eslint-plugin": "^4.31.1",
         "@typescript-eslint/parser": "^4.31.1",
         "@vscode/test-electron": "^1.6.2",
         "eslint": "^7.32.0",
-        "glob": "^7.1.7",
+        "glob": "^11.0.0",
         "mocha": "^9.1.1",
         "ts-loader": "^9.2.5",
-        "typescript": "^4.4.3",
+        "typescript": "^5.8.2",
         "webpack": "^5.52.1",
         "webpack-cli": "^4.8.0"
     },

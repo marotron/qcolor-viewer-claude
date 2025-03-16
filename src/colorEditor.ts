@@ -3,23 +3,41 @@ import * as path from 'path';
 import { ColorParser, QColor, QColorFormat, QColorMatch } from './colorParser';
 import { ColorDecorator } from './colorDecorator';
 
+
 export class ColorEditor implements vscode.Disposable {
+    
     private panel: vscode.WebviewPanel | undefined;
     private currentColorMatch: QColorMatch | undefined;
+    private context: vscode.ExtensionContext;
     
-    constructor(private context: vscode.ExtensionContext) {
-        // Register context menu items
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
+        
+        // Register context menu items with explicit editor usage
         context.subscriptions.push(
             vscode.commands.registerTextEditorCommand(
-                'qcolor-visualizer.editColorAtCursor', 
-                (editor) => this.editColorAtCursor(editor)
+                'qcolor-visualizer.openColorPicker', 
+                (activeEditor) => {
+                    // Explicitly use activeEditor to prevent unused parameter warning
+                    const colorDecorator = this.context.subscriptions.find(
+                        d => d instanceof ColorDecorator
+                    ) as ColorDecorator | undefined;
+                    
+                    if (activeEditor && colorDecorator) {
+                        const colorMatch = colorDecorator.getColorMatchAtPosition(
+                            activeEditor.document, 
+                            activeEditor.selection.active
+                        );
+                        
+                        this.open(colorMatch);
+                    } else {
+                        this.open();
+                    }
+                }
             )
         );
     }
     
-    /**
-     * Open the color editor for a specific color match
-     */
     public open(colorMatch?: QColorMatch): void {
         // If no color match provided, try to get one at the current cursor position
         if (!colorMatch) {
@@ -56,59 +74,42 @@ export class ColorEditor implements vscode.Disposable {
                     enableScripts: true,
                     localResourceRoots: [
                         vscode.Uri.file(path.join(this.context.extensionPath, 'webview'))
-                    ]
+                    ],
+                    // New Security Configuration
+                    webviewOptions: {
+                        sandbox: {
+                            allowScripts: true,
+                            allowForms: false,
+                            allowPopups: false,
+                            allowModals: false,
+                            allowTopNavigation: false
+                        }
+                    }
                 }
             );
             
-            // Handle panel closed event
             this.panel.onDidDispose(() => {
                 this.panel = undefined;
             }, null, this.context.subscriptions);
             
-            // Handle messages from the webview
             this.panel.webview.onDidReceiveMessage(
                 message => this.handleWebviewMessage(message),
                 undefined,
                 this.context.subscriptions
             );
         } else {
-            // If panel already exists, reveal it
             this.panel.reveal();
         }
         
-        // Update the webview content
-        this.panel.webview.html = this.getWebviewContent(colorMatch.color);
-    }
-    
-    /**
-     * Edit the color at the current cursor position
-     */
-    private editColorAtCursor(editor: vscode.TextEditor): void {
-        const cursorPosition = editor.selection.active;
-        
-        // Get the color decorator instance from extension context
-        const colorDecorator = this.context.subscriptions.find(
-            d => d instanceof ColorDecorator
-        ) as ColorDecorator | undefined;
-        
-        if (colorDecorator) {
-            const colorMatch = colorDecorator.getColorMatchAtPosition(
-                editor.document, 
-                cursorPosition
-            );
-            
-            if (colorMatch) {
-                this.open(colorMatch);
-            } else {
-                vscode.window.showInformationMessage('No QColor found at cursor position.');
-            }
+        // Explicitly check panel before setting HTML
+        if (this.panel) {
+            this.panel.webview.html = this.getWebviewContent(colorMatch.color);
         }
     }
     
-    /**
-     * Handle messages from the webview
-     */
     private handleWebviewMessage(message: any): void {
+        console.log('Received message:', message); // Debugging log
+        
         switch (message.command) {
             case 'updateColor':
                 this.updateColorInDocument(message.color);
@@ -118,23 +119,24 @@ export class ColorEditor implements vscode.Disposable {
                     this.panel.dispose();
                 }
                 break;
+            default:
+                console.warn('Unknown message command:', message.command);
         }
     }
     
-    /**
-     * Update the color in the document
-     */
     private updateColorInDocument(newColor: { r: number, g: number, b: number, a: number }): void {
+        // Robust null checks
         if (!this.currentColorMatch) {
+            vscode.window.showErrorMessage('No color match available for update.');
             return;
         }
         
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
+            vscode.window.showErrorMessage('No active text editor.');
             return;
         }
         
-        // Create new QColor object
         const updatedColor: QColor = {
             r: newColor.r,
             g: newColor.g,
@@ -144,21 +146,22 @@ export class ColorEditor implements vscode.Disposable {
             originalArgs: this.currentColorMatch.color.originalArgs
         };
         
-        // Format the new QColor code
         const newText = ColorParser.formatQColorCode(updatedColor, updatedColor.format);
         
-        // Update the document
         editor.edit(editBuilder => {
+            // Safe non-null assertion due to earlier checks
             editBuilder.replace(this.currentColorMatch!.range, newText);
         }).then(success => {
             if (success) {
-                // Update the current color match
-                this.currentColorMatch.color = updatedColor;
+                this.currentColorMatch!.color = updatedColor;
                 
-                // Update the webview content to reflect the new color
                 if (this.panel) {
                     this.panel.webview.html = this.getWebviewContent(updatedColor);
                 }
+                
+                vscode.window.showInformationMessage('Color updated successfully.');
+            } else {
+                vscode.window.showErrorMessage('Failed to update color.');
             }
         });
     }
