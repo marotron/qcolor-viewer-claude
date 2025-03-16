@@ -356,6 +356,7 @@
     // Button events
     applyButton.addEventListener('click', () => {
         // Send updated color back to VS Code
+        // console.log('***Sending color to VS Code:', colorState);
         vscode.postMessage({
             command: 'updateColor',
             color: {

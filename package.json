@@ -3,7 +3,7 @@
     "displayName": "`QColor` Visualizer & Editor",
     "publisher": "marotron",
     "description": "Visualize and edit PyQt/PySide QColor objects in Python files",
-    "version": "0.1.2",
+    "version": "0.1.4",
     "engines": {
         "vscode": "^1.80.0"
     },

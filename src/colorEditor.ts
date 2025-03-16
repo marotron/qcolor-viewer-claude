@@ -76,15 +76,6 @@ export class ColorEditor implements vscode.Disposable {
                         vscode.Uri.file(path.join(this.context.extensionPath, 'webview'))
                     ],
                     // New Security Configuration
-                    webviewOptions: {
-                        sandbox: {
-                            allowScripts: true,
-                            allowForms: false,
-                            allowPopups: false,
-                            allowModals: false,
-                            allowTopNavigation: false
-                        }
-                    }
                 }
             );
             
@@ -112,6 +103,7 @@ export class ColorEditor implements vscode.Disposable {
         
         switch (message.command) {
             case 'updateColor':
+                // console.log('Received updateColor message:', message.color); // Debugging log
                 this.updateColorInDocument(message.color);
                 break;
             case 'close':
@@ -149,6 +141,7 @@ export class ColorEditor implements vscode.Disposable {
         const newText = ColorParser.formatQColorCode(updatedColor, updatedColor.format);
         
         editor.edit(editBuilder => {
+            // vscode.window.showErrorMessage('Replacing color code with new value: ' + newText);
             // Safe non-null assertion due to earlier checks
             editBuilder.replace(this.currentColorMatch!.range, newText);
         }).then(success => {
@@ -682,6 +675,7 @@ export class ColorEditor implements vscode.Disposable {
             
             // Button handlers
             applyButton.addEventListener('click', () => {
+                console.log('Applying color:', { r, g, b, a });
                 vscode.postMessage({
                     command: 'updateColor',
                     color: { r, g, b, a }
